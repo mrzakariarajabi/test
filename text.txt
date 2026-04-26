@@ -1,3 +1,6 @@
 vless://9c53f695-eb63-475c-b11f-e64fa828020d@185.143.234.235:443?encryption=none&security=tls&sni=cndnt.ir&type=ws&host=lbank.trpn.ir&path=%2Fdata#%F0%9F%87%AE%F0%9F%87%B7%20%F0%9F%8D%81Config_jo-82
 vless://9c53f695-eb63-475c-b11f-e64fa828020d@185.143.234.235:443?encryption=none&security=tls&sni=cndnt.ir&type=ws&host=lbank.trpn.ir&path=%2Fdata#%F0%9F%87%AE%F0%9F%87%B7%20%F0%9F%8D%81Config_jo-94
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo0MWQ2NjU1ZDM2MjVmZDE0@185.244.208.150:11201#%F0%9F%87%AD%F0%9F%87%B0%20%F0%9F%8D%81Config_jo-36
+
+
+vless://9c53f695-eb63-475c-b11f-e64fa828020d@185.143.234.235:443?encryption=none&security=tls&sni=cndnt.ir&type=ws&host=lbank.trpn.ir&path=%2Fdata#IR%F0%9F%87%AE%F0%9F%87%B7
