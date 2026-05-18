@@ -1,30 +1,81 @@
-name: Download and Upload to Google Drive
+name: Download from Figshare to Google Drive
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  # Manual trigger only (remove if you want scheduled)
+  # schedule:
+  #   - cron: '0 2 * * *'  # Uncomment for daily at 2 AM
 
 jobs:
-  transfer:
+  upload-to-drive:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Download file
+    - name: Download dataset from Figshare
       run: |
+        echo "📥 Downloading file from Figshare..."
         curl -L -o dataset.zip "https://springernature.figshare.com/ndownloader/files/53623187"
-        ls -lh dataset.zip
+        
+        # Verify download
+        if [ -f dataset.zip ]; then
+          FILE_SIZE=$(du -h dataset.zip | cut -f1)
+          echo "✅ Download successful! Size: $FILE_SIZE"
+          echo "File type: $(file dataset.zip)"
+        else
+          echo "❌ Download failed"
+          exit 1
+        fi
     
     - name: Install rclone
       run: |
+        echo "📦 Installing rclone..."
         curl https://rclone.org/install.sh | sudo bash
-    
-    - name: Configure rclone
+        rclone version
+        
+    - name: Setup Google Drive configuration
       env:
         RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
       run: |
+        # Check if secret exists
+        if [ -z "$RCLONE_CONFIG" ]; then
+          echo "❌ ERROR: RCLONE_CONFIG secret is not set"
+          echo "Please add it in: GitHub Repository → Settings → Secrets and variables → Actions"
+          exit 1
+        fi
+        
+        # Create rclone config directory
         mkdir -p ~/.config/rclone
+        
+        # Write config to file
         echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
-    
+        
+        # Verify config is readable
+        if [ ! -s ~/.config/rclone/rclone.conf ]; then
+          echo "❌ Config file is empty"
+          exit 1
+        fi
+        
+        echo "✅ rclone configured successfully"
+        
     - name: Upload to Google Drive
       run: |
-        rclone copy dataset.zip "gdrive:/" --verbose
-        # Or to a specific folder: rclone copy dataset.zip "gdrive:MyFolder/"
+        # Create timestamped filename
+        TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
+        DEST_NAME="figshare_dataset_${TIMESTAMP}.zip"
+        
+        echo "☁️ Uploading to Google Drive..."
+        
+        # Upload file (change 'gdrive:' to your remote name if different)
+        rclone copy dataset.zip "gdrive:/" --name "$DEST_NAME" --verbose --progress
+        
+        # Verify upload
+        if [ $? -eq 0 ]; then
+          echo "✅ Upload successful!"
+          echo "📁 File uploaded as: $DEST_NAME"
+          
+          # List files to confirm
+          echo "📋 Recent files in Google Drive:"
+          rclone ls "gdrive:/" | tail -5
+        else
+          echo "❌ Upload failed"
+          exit 1
+        fi
