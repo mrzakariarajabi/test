@@ -1,42 +1,30 @@
-name: Download from Figshare and Upload to Google Drive
+name: Download and Upload to Google Drive
 
 on:
-  workflow_dispatch:  # Manual trigger
-  schedule:
-    - cron: '0 2 * * *'  # Optional: daily at 2 AM
+  workflow_dispatch:
 
 jobs:
   transfer:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Download file from Figshare
+    - name: Download file
       run: |
-        # -L follows redirects (handles the 302 status)
-        curl -L -o downloaded_dataset.zip "https://springernature.figshare.com/ndownloader/files/53623187"
-        
-        # Verify download
-        if [ -f downloaded_dataset.zip ]; then
-          echo "Download successful! File size: $(du -h downloaded_dataset.zip)"
-        else
-          echo "Download failed!"
-          exit 1
-        fi
+        curl -L -o dataset.zip "https://springernature.figshare.com/ndownloader/files/53623187"
+        ls -lh dataset.zip
     
-    - name: Setup Google Drive CLI
+    - name: Install rclone
       run: |
-        wget https://github.com/prasmussen/gdrive/releases/download/2.1.1/gdrive_2.1.1_linux_amd64.tar.gz
-        tar -xzf gdrive_2.1.1_linux_amd64.tar.gz
-        sudo install gdrive /usr/local/bin/
+        curl https://rclone.org/install.sh | sudo bash
+    
+    - name: Configure rclone
+      env:
+        RCLONE_CONFIG: ${{ secrets.RCLONE_CONFIG }}
+      run: |
+        mkdir -p ~/.config/rclone
+        echo "$RCLONE_CONFIG" > ~/.config/rclone/rclone.conf
     
     - name: Upload to Google Drive
-      env:
-        GDRIVE_TOKEN: ${{ secrets.GDRIVE_TOKEN }}
       run: |
-        # Configure token
-        mkdir -p ~/.config/gdrive
-        echo "$GDRIVE_TOKEN" | base64 -d > ~/.config/gdrive/token.json
-        
-        # Upload file (adds timestamp to avoid overwrites)
-        TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
-        gdrive upload downloaded_dataset.zip --name "figshare_dataset_${TIMESTAMP}.zip"
+        rclone copy dataset.zip "gdrive:/" --verbose
+        # Or to a specific folder: rclone copy dataset.zip "gdrive:MyFolder/"
